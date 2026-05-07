@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Lab Equipment Checkout</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <i class="fa-solid fa-flask"></i>
+      <span>Lab Equipment</span>
+    </div>
+    <div class="navbar-links">
+      <a href="/dashboard.html"><i class="fa-solid fa-table-cells"></i> Equipment</a>
+      <a href="/admin.html" class="active"><i class="fa-solid fa-gear"></i> Admin</a>
+    </div>
+    <div class="navbar-right">
+      <span class="username" id="nav-username"></span>
+      <span class="role-badge" id="nav-role"></span>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign out
+      </button>
+    </div>
+  </nav>
+
+  <main class="page-container">
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="equipment">
+        <i class="fa-solid fa-microscope"></i> Equipment
+      </button>
+      <button class="tab-btn" data-tab="users">
+        <i class="fa-solid fa-users"></i> Users
+      </button>
+      <button class="tab-btn" data-tab="checkouts">
+        <i class="fa-solid fa-list-check"></i> All Checkouts
+      </button>
+    </div>
+
+    <!-- Tab: Equipment -->
+    <div id="tab-equipment" class="tab-panel">
+      <div class="section-header">
+        <h2>Equipment</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddEquipModal()">
+          <i class="fa-solid fa-plus"></i> Add Equipment
+        </button>
+      </div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table id="equipment-table">
+            <thead>
+              <tr>
+                <th>Name / Serial</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Policy</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Users -->
+    <div id="tab-users" class="tab-panel" style="display:none">
+      <div class="section-header">
+        <h2>Users</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddUserModal()">
+          <i class="fa-solid fa-user-plus"></i> Add User
+        </button>
+      </div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table id="users-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Role / Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: All Checkouts -->
+    <div id="tab-checkouts" class="tab-panel" style="display:none">
+      <div class="section-header">
+        <h2>All Checkouts</h2>
+        <div class="flex">
+          <button class="btn btn-primary btn-sm filter-btn" data-filter="all" onclick="filterCheckouts('all')">All</button>
+          <button class="btn btn-outline btn-sm filter-btn" data-filter="active" onclick="filterCheckouts('active')">Active</button>
+          <button class="btn btn-outline btn-sm filter-btn" data-filter="returned" onclick="filterCheckouts('returned')">Returned</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrapper">
+          <table id="checkouts-table">
+            <thead>
+              <tr>
+                <th>Equipment</th>
+                <th>User</th>
+                <th>Checked Out</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="6"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Equipment Modal ─────────────────────────────────────────────── -->
+  <div id="equip-modal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeEquipModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="equip-modal-title">Add Equipment</h3>
+        <button class="modal-close" onclick="closeEquipModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="equip-error" class="alert alert-danger" style="display:none;">
+          <i class="fa-solid fa-circle-exclamation"></i><span></span>
+        </div>
+        <input type="hidden" id="equip-id">
+        <form id="equip-form" onsubmit="return false;">
+          <div class="form-group">
+            <label for="equip-name">Name <span style="color:var(--danger)">*</span></label>
+            <input id="equip-name" class="form-control" type="text" placeholder="e.g. Olympus BX53 Microscope">
+          </div>
+          <div class="form-group">
+            <label for="equip-description">Description</label>
+            <textarea id="equip-description" class="form-control" rows="2" placeholder="Brief description…"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="equip-serial">Serial Number</label>
+              <input id="equip-serial" class="form-control" type="text" placeholder="SN-XXXX">
+            </div>
+            <div class="form-group">
+              <label for="equip-location">Location</label>
+              <input id="equip-location" class="form-control" type="text" placeholder="Room 204">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeEquipModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitEquipForm()">
+          <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Policy Modal ────────────────────────────────────────────────── -->
+  <div id="policy-modal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closePolicyModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="policy-modal-title">Checkout Policy</h3>
+        <button class="modal-close" onclick="closePolicyModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="policy-error" class="alert alert-danger" style="display:none;">
+          <i class="fa-solid fa-circle-exclamation"></i><span></span>
+        </div>
+
+        <div class="form-group">
+          <label>Allowed Days <span class="text-muted text-xs">(all checked = any day)</span></label>
+          <div class="day-picker">
+            <div class="day-toggle"><input type="checkbox" id="day-0" name="day"><label for="day-0">M</label></div>
+            <div class="day-toggle"><input type="checkbox" id="day-1" name="day"><label for="day-1">T</label></div>
+            <div class="day-toggle"><input type="checkbox" id="day-2" name="day"><label for="day-2">W</label></div>
+            <div class="day-toggle"><input type="checkbox" id="day-3" name="day"><label for="day-3">Th</label></div>
+            <div class="day-toggle"><input type="checkbox" id="day-4" name="day"><label for="day-4">F</label></div>
+            <div class="day-toggle"><input type="checkbox" id="day-5" name="day"><label for="day-5">Sa</label></div>
+            <div class="day-toggle"><input type="checkbox" id="day-6" name="day"><label for="day-6">Su</label></div>
+          </div>
+          <p class="form-hint">Uncheck days to restrict checkouts to specific days of the week.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="policy-max-days">Maximum Checkout Length (days)</label>
+          <input id="policy-max-days" class="form-control" type="number" min="1" max="365" value="7" style="max-width:120px;">
+        </div>
+
+        <div class="form-group">
+          <label>Allowed Users</label>
+          <div class="flex mt-1" style="gap:1.5rem;">
+            <label class="flex text-sm" style="cursor:pointer;">
+              <input type="radio" name="users-radio" id="users-all" value="all" checked style="margin-right:.4rem;">
+              All active users
+            </label>
+            <label class="flex text-sm" style="cursor:pointer;">
+              <input type="radio" name="users-radio" id="users-specific" value="specific" style="margin-right:.4rem;">
+              Specific users only
+            </label>
+          </div>
+        </div>
+
+        <div id="user-select-wrap" style="display:none;">
+          <div class="form-group">
+            <label>Select Users</label>
+            <div id="user-checkboxes" style="max-height:160px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:var(--radius);padding:.75rem;">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closePolicyModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitPolicy()">
+          <i class="fa-solid fa-floppy-disk"></i> Save Policy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── User Modal ──────────────────────────────────────────────────── -->
+  <div id="user-modal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeUserModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="user-modal-title">Add User</h3>
+        <button class="modal-close" onclick="closeUserModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="user-error" class="alert alert-danger" style="display:none;">
+          <i class="fa-solid fa-circle-exclamation"></i><span></span>
+        </div>
+        <input type="hidden" id="user-id">
+        <form id="user-form" onsubmit="return false;">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="user-username">Username <span style="color:var(--danger)">*</span></label>
+              <input id="user-username" class="form-control" type="text" placeholder="jdoe">
+            </div>
+            <div class="form-group">
+              <label for="user-role">Role</label>
+              <select id="user-role" class="form-control">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="user-fullname">Full Name</label>
+            <input id="user-fullname" class="form-control" type="text" placeholder="Jane Doe">
+          </div>
+          <div class="form-group">
+            <label for="user-email">Email</label>
+            <input id="user-email" class="form-control" type="email" placeholder="jdoe@lab.edu">
+          </div>
+          <div class="form-group" id="user-password-row">
+            <label for="user-password">Password</label>
+            <input id="user-password" class="form-control" type="password" autocomplete="new-password"
+                   placeholder="Set a password">
+            <p id="user-password-hint" class="form-hint" style="display:none;">Leave blank to keep current password.</p>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeUserModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitUserForm()">
+          <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>
