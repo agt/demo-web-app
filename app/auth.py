@@ -26,7 +26,9 @@ _ph = PasswordHasher(
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 8
 
-_SECRET_KEY_FILE = Path(".secret_key")
+# SECRET_KEY_FILE overrides the default .secret_key path.
+# JWT_SECRET_KEY supplies the value directly and takes precedence over both.
+_SECRET_KEY_FILE = Path(os.environ.get("SECRET_KEY_FILE", ".secret_key"))
 
 
 def _load_or_generate_secret() -> str:
@@ -35,6 +37,7 @@ def _load_or_generate_secret() -> str:
     if _SECRET_KEY_FILE.exists():
         return _SECRET_KEY_FILE.read_text().strip()
     key = secrets.token_hex(32)
+    _SECRET_KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
     _SECRET_KEY_FILE.write_text(key)
     return key
 

@@ -17,16 +17,30 @@ RUN adduser --disabled-password --gecos "" --uid 1000 appuser \
     && chown -R appuser:appuser /app
 USER appuser
 
-# The SQLite database (lab_equipment.db) and the auto-generated JWT secret
-# (.secret_key) are written to /app at runtime.  Mount a named volume there
-# to persist data across container restarts:
+# ── Runtime configuration ────────────────────────────────────────────────────
+# All three variables are optional; the defaults work out of the box.
 #
-#   docker run -v lab-data:/app ...
+#  DATABASE_URL     Full SQLAlchemy URL (overrides SQLITE_DB_PATH).
+#                   Default: sqlite:///./lab_equipment.db  (inside /app)
 #
-# The JWT secret can also be supplied via environment variable to avoid
-# storing a secret inside a volume:
+#  SQLITE_DB_PATH   Absolute path to the SQLite file when you want to place it
+#                   on a volume without writing a full URL.
+#                   Example: -e SQLITE_DB_PATH=/data/lab.db -v lab-db:/data
 #
-#   docker run -e JWT_SECRET_KEY=<random-hex-64-chars> ...
+#  JWT_SECRET_KEY   Secret used to sign tokens.  Provide this so the key is not
+#                   stored inside the container filesystem.
+#                   Example: -e JWT_SECRET_KEY=$(openssl rand -hex 32)
+#
+#  SECRET_KEY_FILE  Path to the auto-generated key file when JWT_SECRET_KEY is
+#                   not set.  Default: /app/.secret_key
+#                   Example: -e SECRET_KEY_FILE=/secrets/jwt.key -v secrets:/secrets
+#
+# Minimal persistent-data example:
+#   docker run -p 8000:8000 \
+#     -e SQLITE_DB_PATH=/data/lab.db \
+#     -e JWT_SECRET_KEY=$(openssl rand -hex 32) \
+#     -v lab-data:/data \
+#     lab-checkout
 
 EXPOSE 8000
 
